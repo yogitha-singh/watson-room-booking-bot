@@ -11,6 +11,10 @@ A conversational assistant powered by IBM Watson Assistant, Flask and SQLite.
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-4%20passing-2ea44f)
 
+### 🔗 [Live demo: watson-room-booking-bot.onrender.com](https://watson-room-booking-bot.onrender.com/)
+
+<sub>Hosted on Render's free plan, so the first load after a period of inactivity can take up to a minute.</sub>
+
 <img src="bot-demo.png" alt="Watson Room Booking Bot demo" width="460">
 
 </div>
