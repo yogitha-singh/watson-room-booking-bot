@@ -1,166 +1,165 @@
-# AI Room Booking Chatbot (IBM Watson Assistant)
+<div align="center">
 
-A conversational assistant that books meeting rooms, checks availability, lists and cancels bookings.
-**IBM Watson Assistant** performs natural-language understanding (intents and entities); a **Flask** backend
-handles the dialog, validation and a **SQLite** booking database; a lightweight web page is the chat front end.
+# 🏢 Watson Room Booking Bot
+
+**Book a meeting room by simply asking for one.**
+A conversational assistant powered by IBM Watson Assistant, Flask and SQLite.
+
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0-000000?logo=flask&logoColor=white)
+![IBM Watson](https://img.shields.io/badge/IBM%20Watson-Assistant-052FAD?logo=ibm&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-4%20passing-2ea44f)
+
+<img src="docs/bot-demo.png" alt="Watson Room Booking Bot demo" width="460">
+
+</div>
 
 ---
 
-## 1. Problem statement and objectives
+## ✨ What it does
 
-Booking a room through forms or email is slow and error-prone (double bookings, unclear availability).
-This project provides a chat interface that lets a user book a room in natural language, such as
-*"Book a room for 5 people tomorrow at 2pm for 2 hours"*.
+Type *"Book a room for 5 people tomorrow at 2pm for 2 hours"* and the bot understands it, asks only for what is missing, checks for clashes, and confirms your booking.
 
-Objectives
-1. Understand booking requests in free text using IBM Watson Assistant.
-2. Collect missing details through guided questions (slot filling).
-3. Prevent double bookings and enforce business rules (opening hours, capacity, valid dates).
-4. Let users confirm, list and cancel bookings.
-5. Keep working in offline demo mode when Watson credentials are not available.
+| | Feature |
+|---|---|
+| 🗣️ | **Natural-language booking** with IBM Watson intents and entities |
+| 🧩 | **Guided slot filling**: asks for date, time, duration, attendees and name only when needed |
+| 🛡️ | **Double-booking protection**: overlap check, re-verified at write time |
+| ✅ | **Business-rule validation**: opening hours, capacity, past dates, duration limits |
+| 🔎 | **Availability search**, **list** and **cancel** bookings from chat |
+| 🔌 | **Offline demo mode**: regex fallback runs the bot with no cloud account |
+| 🌗 | **Responsive chat UI** with light and dark themes and keyboard focus styles |
 
-## 2. System architecture
+## 🎬 Example
 
-```
- User (browser)
-      │  POST /chat {session_id, message}
-      ▼
- Flask app (app.py) ──► bot.py  Dialog manager: slot filling, validation, confirmation
-                          │  ├─► nlu.py  ──► IBM Watson Assistant (intents + entities)
-                          │  │               └─ regex/keyword fallback if Watson is unavailable
-                          │  └─► booking.py ──► SQLite (rooms, bookings)
-      ▲                   │
-      └───── reply ◄──────┘
-```
-
-Design decision: Watson handles **what the user means**; the application code handles **what to do**.
-This keeps business rules (conflict checks, hours) testable and independent of the cloud service.
-
-| Component | File | Responsibility |
-|---|---|---|
-| Web UI | `static/index.html` | Chat window, quick-reply chips, session id |
-| API | `app.py` | `/chat`, `/health`, serves UI |
-| Dialog manager | `bot.py` | Per-session state, slot filling, validation, confirmation |
-| NLU layer | `nlu.py` | Calls Watson (v2 stateless API), merges entities, fallback parser |
-| Data layer | `booking.py` | Rooms table, overlap-safe booking, cancel, list |
-| Watson skill | `watson/skill-dialog.json` | Importable intents and entities |
-| Tests | `tests/test_bot.py` | End-to-end conversation tests |
-
-## 3. Technology stack
-
-Python 3.10+, Flask, IBM Watson Assistant (`ibm-watson` SDK, API v2), SQLite, HTML/CSS/JavaScript.
-
-## 4. Watson Assistant design
-
-### Intents
-| Intent | Purpose | Example utterance |
-|---|---|---|
-| `book_room` | Start a booking | "reserve a conference room" |
-| `check_availability` | Query free rooms | "which rooms are free at 11am" |
-| `cancel_booking` | Cancel by number | "cancel booking 12" |
-| `list_bookings` | Show a user's bookings | "show my bookings" |
-| `greeting` / `goodbye` | Small talk | "hello" / "thank you" |
-
-Each intent has 6 to 8 training examples in `watson/skill-dialog.json`. Add more for better accuracy.
-
-### Entities
-| Entity | Type | Used for |
-|---|---|---|
-| `@sys-date` | System | Booking date (resolves "tomorrow", "next Friday") |
-| `@sys-time` | System | Start time |
-| `@sys-number` | System | Number of attendees |
-| `@room_type` | Custom | meeting, conference, seminar, huddle (with synonyms) |
-
-### Setup steps
-1. Create an **IBM Cloud** account and a **Watson Assistant** service instance (Lite plan is free).
-2. Open the instance, create an assistant, then **Add a dialog skill > Upload skill** and select `watson/skill-dialog.json`.
-3. Enable the system entities `@sys-date`, `@sys-time`, `@sys-number` in the skill's *Entities > System entities* tab.
-4. Open *Assistant settings* and copy the **Assistant ID**. From the service credentials copy the **API key** and **URL**.
-5. Copy `.env.example` to `.env` and fill in the three values.
-
-## 5. Dialog flow
-
-```
-greeting ─► book_room ─► ask date ─► ask time ─► ask hours ─► ask people ─► ask name
-                                                                              │
-              no free room ◄── check conflicts / capacity ◄───────────────────┘
-                   │                         │
-            suggest another time      offer smallest suitable room
-                                             │
-                                  user confirms (yes/no) ─► booking id returned
+```text
+You : Book a room for 5 people tomorrow at 2pm
+Bot : For how many hours?
+You : 2
+Bot : What name should I book it under?
+You : Asha
+Bot : Bhaskara (meeting, seats 8) is free on 2026-11-13 14:00-16:00 for 5 people.
+      Shall I confirm the booking for Asha? (yes/no)
+You : yes
+Bot : Booked! Booking #1 ... Say 'cancel 1' to cancel.
 ```
 
-Business rules: bookings between 08:00 and 20:00, 0.5 to 8 hours, 1 to 30 attendees, no past dates,
-overlapping bookings in the same room rejected (checked again at write time).
+## 🧠 How it works
 
-Rooms: Eka (2), Aryabhata (4), Bhaskara (8), Charaka (12), Dhruva (30). Edit `ROOMS` in `booking.py`.
+```mermaid
+flowchart LR
+    U[Browser chat UI] -->|POST /chat| F[Flask app]
+    F --> D[Dialog manager<br/>bot.py]
+    D --> N[NLU layer<br/>nlu.py]
+    N -->|intents + entities| W[(IBM Watson Assistant)]
+    N -.->|fallback| R[Regex parser]
+    D --> B[Booking layer<br/>booking.py]
+    B --> S[(SQLite)]
+    D -->|reply| U
+```
 
-## 6. Installation and running
+**Design principle:** Watson decides *what the user means*; application code decides *what to do*. Business rules stay testable and independent of the cloud service, and the bot degrades gracefully if Watson is unreachable.
+
+## 🧰 Tech stack
+
+Python · Flask · IBM Watson Assistant (v2 API) · SQLite · HTML/CSS/JavaScript · pytest
+
+## 🚀 Quick start
 
 ```bash
-git clone <your-repo> && cd room-booking-bot
-python -m venv venv && source venv/bin/activate      # Windows: venv\Scripts\activate
+git clone https://github.com/yogitha-singh/watson-room-booking-bot.git
+cd watson-room-booking-bot
+python -m venv venv
+venv\Scripts\activate            # Mac/Linux: source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env                                 # add Watson credentials (optional)
 python app.py
 ```
 
-Open http://localhost:5000. Check `http://localhost:5000/health`: it reports `"nlu": "watson"` or `"fallback"`.
+Open **http://localhost:5000**. With no credentials it runs in demo mode; check `/health` to see whether NLU is `watson` or `fallback`.
 
-### API
-`POST /chat` with `{"session_id": "abc", "message": "book a room"}` returns `{"session_id": "abc", "reply": "..."}`.
+### Enable IBM Watson (optional)
 
-## 7. Sample conversation
+1. Create a free **Watson Assistant** instance on IBM Cloud and an assistant.
+2. **Add a dialog skill → Upload** `watson/skill-dialog.json`.
+3. Enable system entities `@sys-date`, `@sys-time`, `@sys-number`.
+4. Copy `.env.example` to `.env` and fill in `WATSON_API_KEY`, `WATSON_URL`, `WATSON_ASSISTANT_ID`.
+5. Restart the app. `/health` should now report `"nlu": "watson"`.
 
-```
-User: Book a room for 5 people tomorrow at 2pm
-Bot : For how many hours?
-User: 2
-Bot : What name should I book it under?
-User: Asha
-Bot : Bhaskara (meeting, seats 8) is free on 2026-11-13 14:00-16:00 for 5 people.
-      Shall I confirm the booking for Asha? (yes/no)
-User: yes
-Bot : Booked! Booking #1: Bhaskara on 2026-11-13, 14:00-16:00 for Asha. Say 'cancel 1' to cancel.
-```
+## 🎯 Watson design
 
-## 8. Testing
-
-Four conversation tests cover the full booking flow, conflict handling, opening-hours validation, and
-list/cancel. Run `pytest -q tests`. All four passed during development using the offline fallback NLU.
-
-| Test | What it proves |
+| Intent | Example |
 |---|---|
-| `test_full_booking_flow` | Slot filling and confirmation produce a booking |
-| `test_conflict_hides_booked_room` | A booked room is not offered for overlapping time |
-| `test_validation_opening_hours` | 06:00 start is rejected |
-| `test_list_and_cancel` | A booking can be listed by name and cancelled |
+| `book_room` | "reserve a conference room" |
+| `check_availability` | "which rooms are free at 11am" |
+| `cancel_booking` | "cancel booking 12" |
+| `list_bookings` | "show my bookings" |
+| `greeting`, `goodbye` | "hello", "thank you" |
 
-Suggested additions for the report: measure Watson intent accuracy using the Watson *Improve* tab or a
-held-out set of 30+ utterances and report a confusion matrix.
+Entities: `@sys-date`, `@sys-time`, `@sys-number`, and a custom `@room_type` (meeting, conference, seminar, huddle) with synonyms.
 
-## 9. Limitations
+## 📏 Business rules
 
-- Dialog state is kept in memory, so it resets on restart and does not scale across multiple servers.
-- No user authentication; bookings are matched by name only.
-- Times are interpreted in the server's local time zone; single-language (English).
-- Small training set; accuracy will improve with more utterances.
+- Bookings between **08:00 and 20:00**, lasting **0.5 to 8 hours**
+- **1 to 30** attendees, no dates in the past
+- No overlapping bookings in the same room
+- The **smallest suitable room** is offered first
 
-## 10. Future work
+| Room | Seats | Type |
+|---|---|---|
+| Eka | 2 | Huddle |
+| Aryabhata | 4 | Meeting |
+| Bhaskara | 8 | Meeting |
+| Charaka | 12 | Conference |
+| Dhruva | 30 | Seminar |
 
-Authentication (SSO), Google/Outlook calendar sync, email confirmations, Redis session store,
-room-type preference (`@room_type` is trained but not yet used in search), multilingual support,
-deployment to IBM Cloud Code Engine, and voice input with Watson Speech to Text.
+## 🗂️ Project structure
 
-## 11. Project structure
-
+```text
+watson-room-booking-bot/
+├── app.py                  # Flask routes: /, /chat, /health
+├── bot.py                  # Dialog manager, slot filling, validation
+├── nlu.py                  # Watson integration + regex fallback
+├── booking.py              # SQLite data layer, overlap-safe booking
+├── static/index.html       # Chat UI
+├── watson/skill-dialog.json# Importable Watson skill
+├── tests/test_bot.py       # Conversation tests
+├── docs/bot-demo.png        # Screenshot
+├── requirements.txt
+└── .env.example
 ```
-room-booking-bot/
-├── app.py            ├── bot.py           ├── nlu.py          ├── booking.py
-├── static/index.html ├── watson/skill-dialog.json
-├── tests/test_bot.py ├── requirements.txt └── .env.example
+
+## 🧪 Testing
+
+```bash
+pytest -q tests
 ```
 
-## 12. References
+| Test | Verifies |
+|---|---|
+| `test_full_booking_flow` | Slot filling and confirmation create a booking |
+| `test_conflict_hides_booked_room` | Booked rooms are not offered for overlapping times |
+| `test_validation_opening_hours` | A 06:00 start is rejected |
+| `test_list_and_cancel` | Bookings can be listed by name and cancelled |
 
-IBM Watson Assistant documentation (cloud.ibm.com/docs/assistant), IBM Watson Python SDK (`ibm-watson`), Flask documentation.
+## ⚠️ Limitations
+
+Dialog state is held in memory (resets on restart), bookings are matched by name with no authentication, times use the server's time zone, and the bot is English-only with a small Watson training set.
+
+## 🔭 Roadmap
+
+- [ ] SSO authentication
+- [ ] Google and Outlook calendar sync
+- [ ] Email confirmations
+- [ ] Redis session store and PostgreSQL
+- [ ] Use `@room_type` preference in room search
+- [ ] Multilingual support and voice input (Watson Speech to Text)
+- [ ] Deploy to IBM Cloud Code Engine
+
+## 👩‍💻 Author
+
+**Yogitha Singh** · [GitHub @yogitha-singh](https://github.com/yogitha-singh)
+
+---
+
+<div align="center">If you found this useful, consider giving it a ⭐</div>
