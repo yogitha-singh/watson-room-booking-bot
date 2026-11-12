@@ -11,7 +11,7 @@ A conversational assistant powered by IBM Watson Assistant, Flask and SQLite.
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-4%20passing-2ea44f)
 
-<img src="docs/bot-demo.png" alt="Watson Room Booking Bot demo" width="460">
+<img src="bot-demo.png" alt="Watson Room Booking Bot demo" width="460">
 
 </div>
 
