@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room Booking Assistant</title>
+<style>
+:root{--ink:#1d2733;--paper:#f4f7f6;--line:#d5dedb;--accent:#0b6b73;--onaccent:#fff;--bot:#fff}
+@media (prefers-color-scheme:dark){:root{--ink:#e6edf0;--paper:#12191d;--line:#2a373d;--accent:#46b4bd;--onaccent:#06262a;--bot:#1b252a}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{font:16px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif;background:var(--paper);color:var(--ink);display:flex;justify-content:center}
+main{width:100%;max-width:640px;display:flex;flex-direction:column;height:100%;padding:16px}
+h1{font-size:1.25rem;margin:4px 0 12px}
+#log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0}
+.m{max-width:85%;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bot)}
+.u{align-self:flex-end;background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+button,input{font:inherit;color:inherit}
+.chips button{border:1px solid var(--accent);background:none;color:var(--accent);padding:6px 12px;border-radius:99px;cursor:pointer}
+form{display:flex;gap:8px}
+input{flex:1;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bot)}
+form button{background:var(--accent);color:var(--onaccent);border:0;border-radius:10px;padding:0 18px;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style></head><body><main>
+<h1>Room booking assistant</h1>
+<div id="log" aria-live="polite"></div>
+<div class="chips" id="chips"></div>
+<form id="f"><input id="t" placeholder="Type a message" autocomplete="off" aria-label="Message"><button>Send</button></form>
+</main>
+<script>
+const sid = crypto.randomUUID(), log = document.getElementById('log'), t = document.getElementById('t');
+const add = (txt, who) => { const d = document.createElement('div'); d.className = 'm ' + who; d.textContent = txt; log.append(d); log.scrollTop = log.scrollHeight; };
+async function send(msg) {
+  add(msg, 'u');
+  try {
+    const r = await fetch('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sid, message:msg})});
+    add((await r.json()).reply, 'b');
+  } catch { add('I lost the connection to the server. Check that it is running and try again.', 'b'); }
+}
+document.getElementById('f').onsubmit = e => { e.preventDefault(); if (t.value.trim()) { send(t.value.trim()); t.value = ''; } };
+['Book a room', 'Check availability', 'My bookings'].forEach(s => { const b = document.createElement('button'); b.textContent = s; b.onclick = () => send(s); document.getElementById('chips').append(b); });
+add('Hi! I can book a room, check availability, or cancel a booking.', 'b');
+</script></body></html>

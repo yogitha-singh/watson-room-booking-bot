@@ -1,0 +1,223 @@
+{
+  "name": "room-booking",
+  "language": "en",
+  "description": "Room booking NLU: intents and entities",
+  "intents": [
+    {
+      "intent": "book_room",
+      "examples": [
+        {
+          "text": "I want to book a room"
+        },
+        {
+          "text": "book a meeting room for tomorrow at 3pm"
+        },
+        {
+          "text": "reserve a conference room"
+        },
+        {
+          "text": "I need a room for 6 people"
+        },
+        {
+          "text": "can I reserve a room for two hours"
+        },
+        {
+          "text": "schedule a room for Friday"
+        },
+        {
+          "text": "book room for team meeting"
+        },
+        {
+          "text": "please book a seminar hall for 20 people"
+        }
+      ]
+    },
+    {
+      "intent": "check_availability",
+      "examples": [
+        {
+          "text": "is any room available tomorrow"
+        },
+        {
+          "text": "check availability for 2pm"
+        },
+        {
+          "text": "are there free rooms today"
+        },
+        {
+          "text": "which rooms are free at 11am"
+        },
+        {
+          "text": "is there a room for 10 people on Monday"
+        },
+        {
+          "text": "show available rooms"
+        },
+        {
+          "text": "any room open this afternoon"
+        },
+        {
+          "text": "do you have a room free tomorrow"
+        }
+      ]
+    },
+    {
+      "intent": "cancel_booking",
+      "examples": [
+        {
+          "text": "cancel my booking"
+        },
+        {
+          "text": "cancel booking 12"
+        },
+        {
+          "text": "I want to cancel my reservation"
+        },
+        {
+          "text": "delete booking number 5"
+        },
+        {
+          "text": "please remove my room booking"
+        },
+        {
+          "text": "cancel reservation 7"
+        }
+      ]
+    },
+    {
+      "intent": "list_bookings",
+      "examples": [
+        {
+          "text": "show my bookings"
+        },
+        {
+          "text": "list my reservations"
+        },
+        {
+          "text": "what rooms have I booked"
+        },
+        {
+          "text": "my bookings please"
+        },
+        {
+          "text": "do I have any upcoming bookings"
+        },
+        {
+          "text": "view my reservations"
+        }
+      ]
+    },
+    {
+      "intent": "greeting",
+      "examples": [
+        {
+          "text": "hi"
+        },
+        {
+          "text": "hello"
+        },
+        {
+          "text": "hey there"
+        },
+        {
+          "text": "good morning"
+        },
+        {
+          "text": "good evening"
+        },
+        {
+          "text": "hello bot"
+        }
+      ]
+    },
+    {
+      "intent": "goodbye",
+      "examples": [
+        {
+          "text": "bye"
+        },
+        {
+          "text": "goodbye"
+        },
+        {
+          "text": "thanks, that's all"
+        },
+        {
+          "text": "thank you"
+        },
+        {
+          "text": "see you later"
+        },
+        {
+          "text": "that is all for now"
+        }
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "entity": "room_type",
+      "values": [
+        {
+          "type": "synonyms",
+          "value": "meeting",
+          "synonyms": [
+            "meeting room",
+            "team room"
+          ]
+        },
+        {
+          "type": "synonyms",
+          "value": "conference",
+          "synonyms": [
+            "conference room",
+            "boardroom"
+          ]
+        },
+        {
+          "type": "synonyms",
+          "value": "seminar",
+          "synonyms": [
+            "seminar hall",
+            "auditorium"
+          ]
+        },
+        {
+          "type": "synonyms",
+          "value": "huddle",
+          "synonyms": [
+            "huddle room",
+            "small room"
+          ]
+        }
+      ]
+    }
+  ],
+  "dialog_nodes": [
+    {
+      "dialog_node": "anything_else",
+      "title": "Anything else",
+      "conditions": "anything_else",
+      "type": "standard",
+      "output": {
+        "generic": [
+          {
+            "response_type": "text",
+            "values": [
+              {
+                "text": "OK"
+              }
+            ],
+            "selection_policy": "sequential"
+          }
+        ]
+      }
+    }
+  ],
+  "counterexamples": [],
+  "metadata": {
+    "api_version": {
+      "major_version": "v1"
+    }
+  }
+}
